@@ -1,0 +1,6 @@
+#!/bin/bash
+
+version=$(curl -sI https://github.com/google/bundletool/releases/latest|awk '/location/{print$2}'|sed 's/\r//')
+version=${version##*/}
+
+wget -cO bundletool.jar https://github.com/google/bundletool/releases/download/$version/bundletool-all-$version.jar

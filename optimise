@@ -1,0 +1,38 @@
+#!/bin/bash
+
+_do_cmd() {
+	if [ -e "$PWD/zipalign" ]
+	then
+		local bin="$PWD/zipalign"
+		local input="$1" output="$2" args="$3"
+		[ -x $bin ] || chmod +x $bin
+		printf 'Recompress with Zopfli...'
+		$bin "${args}" -p -f 4 "${input}" "${output}".apk
+		printf 'done.\n'
+		printf 'ReSign the apk...'
+		_sigin_apk "${output}".apk
+		printf 'done.\n'
+	else
+		echo "file '$PWD/zipalign' does not exist!"
+		exit 123
+	fi
+}
+
+_sigin_apk() {
+	local tool_dir="$PWD"
+	java -jar "${tool_dir}/lib/apksigner.jar" sign --ks "${tool_dir}/android.jks" --ks-key-alias AndroidSign --ks-pass pass:sign123 --key-pass pass:sign123 --v1-signing-enabled false --v2-signing-enabled true --v3-signing-enabled false --v4-signing-enabled false --out "${1%.apk}".sign.apk "$1"
+	[ ! -e "${1%.apk}.sign.apk" ] || rm "$1"
+}
+
+_use() {
+cat <<EOF
+usage: ${0##*/} [APK_FILE]
+EOF
+}
+
+case $1 in
+	*.apk) _do_cmd "$1" "${1%.apk}-out" -z
+		;;
+	*) _use
+		;;
+esac
